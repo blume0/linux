@@ -1719,7 +1719,7 @@ static ssize_t read_file_vfe_dump_regs(struct file *file,
 
 	mutex_lock(&vfe->power_lock);
 
-	//len += scnprintf(buf, buf_len, "HW_VERSION 0x%08x\n", vfe->hw_version);
+	len += scnprintf(buf, buf_len, "HW_VERSION 0x%08x\n", vfe->hw_version);
 	buf_len -= len;
 
 	if (vfe->power_count)
