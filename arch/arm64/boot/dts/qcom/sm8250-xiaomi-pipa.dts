@@ -654,15 +654,16 @@
 
 &cci1_i2c1 {
 	camera_front: camera@20 {
-		compatible = "hynix,hi846";
+		compatible = "hynix,pipa-aac-hi846w-front";
 		reg = <0x20>;
 
-		vdda-supply = <&camera_front_vana>;
-		vddd-supply = <&vreg_l2c_1p2>;
-		vddio-supply = <&vreg_l1c_1p8>;
+		vana-supply = <&camera_front_vana>;
+		vdig-supply = <&vreg_l2c_1p2>;
+		vio-supply = <&vreg_l1c_1p8>;
 
 		clocks = <&camcc CAM_CC_MCLK3_CLK>;
 		clock-frequency = <19200000>;
+		clock-names = "xvclk";
 
 		reset-gpios = <&tlmm 109 GPIO_ACTIVE_LOW>;
 		pinctrl-0 = <&mclk3_active>;
