@@ -58,3 +58,9 @@ In particular:
       gunzip ramdisk # deletes ramdisk.gz, outputs ramdisk
       (mkdir ramdisk_outdir && cd ramdisk_outdir && cpio -id < ../ramdisk)
     #+END_SRC
+** Repacking quickly
+(from inside the folder containing the unpacked stuff)
+#+BEGIN_SRC shell
+  OUT_IMG=boot_repacked.img; MKBOOTIMG=../../../mkbootimg/mkbootimg; BOOT_PREFIX=my_boot.img
+  $MKBOOTIMG --base $(cat $BOOT_PREFIX.img-base)  --cmdline "$(cat $BOOT_PREFIX-cmdline)" --hashtype $(cat $BOOT_PREFIX-hashtype) --header_version $(cat $BOOT_PREFIX-header_version) --kernel $BOOT_PREFIX-kernel --kernel_offset $(cat $BOOT_PREFIX-kernel_offset) --pagesize $(cat $BOOT_PREFIX-pagesize) --ramdisk $BOOT_PREFIX-ramdisk --ramdisk_offset $(cat $BOOT_PREFIX-ramdisk_offset) --second_offset $(cat $BOOT_PREFIX-second_offset) --tags_offset $(cat $BOOT_PREFIX-tags_offset) -o $out
+#+END_SRC
