@@ -806,6 +806,7 @@ static const char * const pipa_aac_hi846w_front_supply_names[] = {
 };
 
 struct pipa_aac_hi846w_front {
+	struct gpio_desc *reset_gpio;
 	struct clk *xvclk;
 	struct v4l2_subdev sd;
 	struct media_pad pad;
@@ -1181,6 +1182,12 @@ static int pipa_aac_hi846w_front_power_on(struct device *dev)
 	usleep_range(1000, 2000);
 	usleep_range(11000, 12000);
 
+	/* 30us = 2400 cycles at 80Mhz */
+	usleep_range(30, 60);
+	if (pipa_aac_hi846w_front->reset_gpio)
+		gpiod_set_value_cansleep(pipa_aac_hi846w_front->reset_gpio, 0);
+	usleep_range(30, 60);
+
 	return 0;
 
 disable_regulator:
@@ -1194,6 +1201,9 @@ static int pipa_aac_hi846w_front_power_off(struct device *dev)
 	struct v4l2_subdev *sd = dev_get_drvdata(dev);
 	struct pipa_aac_hi846w_front *pipa_aac_hi846w_front = to_pipa_aac_hi846w_front(sd);
 	usleep_range(1000, 2000);
+
+	if (pipa_aac_hi846w_front->reset_gpio)
+		gpiod_set_value_cansleep(pipa_aac_hi846w_front->reset_gpio, 1);
 
 	clk_disable_unprepare(pipa_aac_hi846w_front->xvclk);
 	usleep_range(1000, 2000);
