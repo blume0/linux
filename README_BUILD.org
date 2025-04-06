@@ -1,0 +1,60 @@
+* Logging what I did to generate a fully flashable boot.img
+** Context
+ - The current working directory is the root of the linux folder
+ - At the level of the linux/ folder, there is the xiaomi-pipa-firmware/ folder cloned from [[https://github.com/pipa-mainline/xiaomi-pipa-firmware][pipa-mainline]]
+ - At the level of the parent of the linux/ folder, there is the ~mkinitfs~ repo cloned from [[https://github.com/osm0sis/mkbootimg][here]].
+** Steps
+1. Generate the .config file (and define env variables)
+ #+BEGIN_SRC shell
+   export ARCH=arm64
+   export CROSS_COMPILE=aarch64-linux-gnu- # had to install aarch64-linux-gnu-gcc
+   make O=out -j8 defconfig sm8250.config
+ #+END_SRC
+2. Compile the kernel
+ #+BEGIN_SRC shell
+   make O=out -j8
+ #+END_SRC
+3. Compile the panel driver
+ Panel is NOVATEK_NT36532
+ #+BEGIN_SRC shell
+   make O=out menuconfig
+   # In the menuconfig, select Device Drivers → Display Panels → ...
+   # Can also search for 'nt36532' in the interactive menu.
+ #+END_SRC
+4. Recompile
+ #+BEGIN_SRC shell
+   make O=out -j8 # this should only compile the module files of the panel
+ #+END_SRC
+5. Combine ~Image.gz~ and DTB:
+ #+BEGIN_SRC shell
+   (cd out/arch/arm64/boot && cat Image.gz dts/qcom/sm8250-xiaomi-pipa.dtb Image.gz-dtb)
+ #+END_SRC
+6. Install modules and firmware files in initramfs
+ #+BEGIN_SRC shell
+   mkdir initramfs
+   make O=out INSTALL_MOD_PATH=$(pwd)/initramfs modules_install
+   cp -r ../xiaomi-pipa-firmware/* initramfs/
+ #+END_SRC
+7. Compress initramfs
+ #+BEGIN_SRC shell
+   (cd initramfs && find . | cpio -o -H newc | gzip > ../out/initramfs.cpio.gz)
+ #+END_SRC
+8. Generate ~boot.img~
+ #+BEGIN_SRC shell
+   ../../mkbootimg/mkbootimg --kernel out/arch/arm64/boot/Image.gz-dtb --ramdisk initramfs.cpio.gz --cmdline "noquiet loglevel=2 console=tty0 earlycon=tty0 keep_bootcon root=LABEL=arch_rootfs rw" --output repacked_boot.img  --kernel_offset 0x8000 --ramdisk_offset 0x01000000 --tags_offset 0x100 --pagesize 4096 --base 0
+ #+END_SRC
+** Current results:
+ - Still does not make the panel work on startup
+ - Correct format of things: by simply replacing the ramdisk with the prebuilt one after unpacking with unpackbootimg then repacking (described in the next section) it boots succesfully.
+
+* Unpacking and repacking using unpackbootimg
+** Unpacking:
+Done with src_shell{unpackbootimg -i boot.img -o outdir}. Generates files named ~boot.img-*~.
+In particular:
+  - ~boot.img-kernel~ :: gzip compressed binary file (the actual linux kernel)
+  - ~boot.img-ramdisk~ :: cpio+gzip compressed initramfs. One can obtain the contents with:
+    #+BEGIN_SRC shell
+      cp boot.img-ramdisk ramdisk.gz
+      gunzip ramdisk # deletes ramdisk.gz, outputs ramdisk
+      (mkdir ramdisk_outdir && cd ramdisk_outdir && cpio -id < ../ramdisk)
+    #+END_SRC
