@@ -14,7 +14,7 @@
  #+BEGIN_SRC shell
    make O=out -j8
  #+END_SRC
-3. Compile the panel driver
+3. Select the panel driver as a module
  Panel is NOVATEK_NT36532
  #+BEGIN_SRC shell
    make O=out menuconfig
@@ -27,7 +27,7 @@
  #+END_SRC
 5. Combine ~Image.gz~ and DTB:
  #+BEGIN_SRC shell
-   (cd out/arch/arm64/boot && cat Image.gz dts/qcom/sm8250-xiaomi-pipa.dtb Image.gz-dtb)
+   (cd out/arch/arm64/boot && cat Image.gz dts/qcom/sm8250-xiaomi-pipa.dtb > Image.gz-dtb)
  #+END_SRC
 6. Install modules and firmware files in initramfs
  #+BEGIN_SRC shell
