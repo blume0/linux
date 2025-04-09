@@ -14,7 +14,7 @@
  #+BEGIN_SRC shell
    make O=out -j8
  #+END_SRC
-3. Select the panel driver as a module
+3. Compile the panel driver
  Panel is NOVATEK_NT36532
  #+BEGIN_SRC shell
    make O=out menuconfig
