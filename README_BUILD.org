@@ -1,3 +1,5 @@
+File used as a general log for my trials to learn kernel hacking
+
 * Logging what I did to generate a fully flashable boot.img
 ** Context
  - The current working directory is the root of the linux folder
@@ -37,11 +39,11 @@
  #+END_SRC
 7. Compress initramfs
  #+BEGIN_SRC shell
-   (cd initramfs && find . | cpio -o -H newc | gzip > ../out/initramfs.cpio.gz)
+   (cd initramfs && /usr/bin/fakeroot /bin/bash -c "find . | cpio -o -H newc | gzip > ../out/initramfs.cpio.gz")
  #+END_SRC
 8. Generate ~boot.img~
  #+BEGIN_SRC shell
-   ../../mkbootimg/mkbootimg --kernel out/arch/arm64/boot/Image.gz-dtb --ramdisk initramfs.cpio.gz --cmdline "noquiet loglevel=2 console=tty0 earlycon=tty0 keep_bootcon root=LABEL=arch_rootfs rw" --output repacked_boot.img  --kernel_offset 0x8000 --ramdisk_offset 0x01000000 --tags_offset 0x100 --pagesize 4096 --base 0
+   ../../mkbootimg/mkbootimg --kernel out/arch/arm64/boot/Image.gz-dtb --ramdisk out/initramfs.cpio.gz --cmdline "noquiet loglevel=2 console=tty0 earlycon=tty0 keep_bootcon root=LABEL=arch_rootfs rw" --output repacked_boot.img  --kernel_offset 0x8000 --ramdisk_offset 0x01000000 --tags_offset 0x100 --pagesize 4096 --base 0
  #+END_SRC
 ** Current results:
  - Still does not make the panel work on startup
@@ -62,5 +64,19 @@ In particular:
 (from inside the folder containing the unpacked stuff)
 #+BEGIN_SRC shell
   OUT_IMG=boot_repacked.img; MKBOOTIMG=../../../mkbootimg/mkbootimg; BOOT_PREFIX=my_boot.img
-  $MKBOOTIMG --base $(cat $BOOT_PREFIX.img-base)  --cmdline "$(cat $BOOT_PREFIX-cmdline)" --hashtype $(cat $BOOT_PREFIX-hashtype) --header_version $(cat $BOOT_PREFIX-header_version) --kernel $BOOT_PREFIX-kernel --kernel_offset $(cat $BOOT_PREFIX-kernel_offset) --pagesize $(cat $BOOT_PREFIX-pagesize) --ramdisk $BOOT_PREFIX-ramdisk --ramdisk_offset $(cat $BOOT_PREFIX-ramdisk_offset) --second_offset $(cat $BOOT_PREFIX-second_offset) --tags_offset $(cat $BOOT_PREFIX-tags_offset) -o $out
+  $MKBOOTIMG --base $(cat $BOOT_PREFIX-base)  --cmdline "$(cat $BOOT_PREFIX-cmdline)" --hashtype $(cat $BOOT_PREFIX-hashtype) --header_version $(cat $BOOT_PREFIX-header_version) --kernel $BOOT_PREFIX-kernel --kernel_offset $(cat $BOOT_PREFIX-kernel_offset) --pagesize $(cat $BOOT_PREFIX-pagesize) --ramdisk $BOOT_PREFIX-ramdisk --ramdisk_offset $(cat $BOOT_PREFIX-ramdisk_offset) --second_offset $(cat $BOOT_PREFIX-second_offset) --tags_offset $(cat $BOOT_PREFIX-tags_offset) -o $OUT_IMG
 #+END_SRC
+
+* Device tree sources
+** TODO Learn the format and what it covers exactly
+** Misc info
+- Part of the kernel
+** Manipulatings dts/dtb files
+- useful packages :: ~device-tree-compiler~ (provides ~dtc~), and the ~extract-dtb~ python package to extract from Vmlinuz/boot.img files
+- Converting dts (device tree source) files :: ~dtc -I dts -O dtb <file.dts>~
+- Converting dtb (device tree blob) files :: ~dtc -I dtb -O dts <file.dtb>~
+- Extracting dtb from the kernel :: ~extract-dtb -o <outdir> <vmlinuz | boot image>~
+  - For Android, the dtb is in a separated partition (~dtbo.img~ for pipa) and can still be extracted with ~extract-dtb~.
+
+* Android specific differences
+- dtb does not seem to be appended to the kernel binary
