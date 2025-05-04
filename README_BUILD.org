@@ -80,3 +80,9 @@ In particular:
 
 * Android specific differences
 - dtb does not seem to be appended to the kernel binary
+
+* Porting DisplayPort Altmode support for pipa
+- Using stock dtb file and https://github.com/beet-stuffs/kernel_xiaomi_sm8250
+- Commands templates I used:
+  - ~grep 'device_tree_node_or_label' $({path to bcpppp} list_headers 2>/dev/null < pipa-sm8250.dtsi  | grep -v '^dsi') pipa-sm8250.dtsi~ where ~pipa-sm8250.dtsi~ is the main device tree file.
+  - ~grep -R 'compatible_driver_name' drivers teckpack~
