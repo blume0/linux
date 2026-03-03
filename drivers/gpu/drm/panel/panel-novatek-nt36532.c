@@ -322,8 +322,29 @@ static const struct drm_display_mode nt36532_mode_120 = {
 	.vtotal = 2880 + 26 + 2 + 214,
 	.width_mm = 148,
 	.height_mm = 237,
+	.type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED,
+};
+
+static const struct drm_display_mode nt36532_mode_60 = {
+	.clock = (1800 + 200 + 4 + 92) * (2880 + 26 + 2 + 214) * 60 / 1000,
+	.hdisplay = 1800,
+	.hsync_start = 1800 + 200,
+	.hsync_end = 1800 + 200 + 4,
+	.htotal = 1800 + 200 + 4 + 92,
+	.vdisplay = 2880,
+	.vsync_start = 2880 + 26,
+	.vsync_end = 2880 + 26 + 2,
+	.vtotal = 2880 + 26 + 2 + 214,
+	.width_mm = 148,
+	.height_mm = 237,
 	.type = DRM_MODE_TYPE_DRIVER,
 };
+
+static const struct drm_display_mode const *nt36532_modes[] = {
+	&nt36532_mode_120,
+	&nt36532_mode_60
+};
+
 static const struct panel_desc pipa_desc = {
 	.dsi_info = {
 		.type = "pipa",
@@ -477,9 +498,29 @@ static int nt36532_unprepare(struct drm_panel *panel)
 static int nt36532_get_modes(struct drm_panel *panel,
 					struct drm_connector *connector)
 {
-	const struct drm_display_mode *mode;
-	mode = &nt36532_mode_120;
-	return drm_connector_helper_get_modes_fixed(connector, mode);
+
+	const struct drm_display_mode *const *modes = nt36532_modes;
+	const int nmodes = ARRAY_SIZE(nt36532_modes);
+
+	for (int i = 0; i < nmodes; i++) {
+		struct drm_display_mode *mode;
+
+
+		mode = drm_mode_duplicate(connector->dev, modes[i]);
+		if (!mode) {
+			dev_err(panel->dev, "failed to add mode %ux%u@%u\n",
+				    modes[i]->hdisplay, modes[i]->vdisplay, drm_mode_vrefresh(modes[i]));
+			return -ENOMEM;
+		}
+
+		drm_mode_set_name(mode);
+		drm_mode_probed_add(connector, mode);
+	}
+
+	connector->display_info.width_mm = modes[0]->width_mm;
+	connector->display_info.height_mm = modes[0]->height_mm;
+
+	return nmodes;
 }
 
 static const struct drm_panel_funcs nt36532_panel_funcs = {
