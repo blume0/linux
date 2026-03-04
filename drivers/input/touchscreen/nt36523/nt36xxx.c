@@ -900,6 +900,8 @@ static irqreturn_t nvt_ts_work_func(int irq, void *data)
 
 	mutex_lock(&ts->lock);
 
+	NVT_LOG("WA: touchscreen interrupt. pen_support=%d, pinputd_enable=%d", ts->pen_support, ts->pen_input_dev_enable);
+
 	if (ts->dev_pm_suspend) {
 		ret = wait_for_completion_timeout(&ts->dev_pm_suspend_completion, msecs_to_jiffies(500));
 		if (!ret) {
@@ -1010,13 +1012,13 @@ static irqreturn_t nvt_ts_work_func(int irq, void *data)
 	input_sync(ts->input_dev);
 
 	if (ts->pen_support && ts->pen_input_dev_enable && !(ts->pen_is_charge)) {
-/*
+
 		//--- dump pen buf ---
-		printk("%02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
+		NVT_LOG("WA PEN DATA: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
 			point_data[66], point_data[67], point_data[68], point_data[69], point_data[70],
 			point_data[71], point_data[72], point_data[73], point_data[74], point_data[75],
 			point_data[76], point_data[77], point_data[78], point_data[79]);
-*/
+
 		// parse and handle pen report
 		pen_format_id = point_data[66];
 		if (pen_format_id != 0xFF) {
